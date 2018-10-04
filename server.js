@@ -105,6 +105,60 @@ app.post('/recipes', jsonParser, (req, res) => {
   res.status(201).json(item);
 });
 
+app.put('/recipes/:id', jsonParser, (req, res) => {
+  const requiredFields = ['id', 'name', 'ingredients'];
+  //1. check to see if fields are empty
+  const errorMessage1 = validateRequiredFields(requiredFields, req);
+  
+  if (errorMessage1){
+    return res.status(400).send(errorMessage1);
+  }
+  //2. check to see if id passed matches id in URL
+  const errorMessage2 = validateMatchingIDs(req);
+  if (errorMessage2) {
+    return res.status(400).send(errorMessage2);
+  }
+  //3. After validation - update recipe
+  console.log(`Updating recipe \`${req.params.id}\``);
+  console.log(req.body.ingredients);
+  Recipes.update({
+    id: req.params.id,
+    name: req.body.name,
+    ingredients: req.body.ingredients
+  });
+  res.status(204).end();
+});
+
+app.post('/recipes', jsonParser, (req, res) => {
+  const requiredFields = ['name'];
+  const errorMessage = validateRequiredFields(requiredFields, req);
+  if (errorMessage) {
+    return res.status(400).send(errorMessage);
+  }
+  const item = Recipes.create(req.body.name);
+  res.status(201).json(item); 
+ });
+ 
+function validateMatchingIDs (req) {
+  if (req.params.id !== req.body.id){
+    const message = `Request path id (${req.params.id}) and request body id (${req.body.id}) must match`;
+    console.error(message);
+    return message;
+  }
+  return null;
+};
+ 
+function validateRequiredFields(requiredFields, req){
+   for (let i=0; i<requiredFields.length; i++) {
+     const field = requiredFields[i];
+     if (!(field in req.body)) {
+       const message = `Missing \`${field}\` in request body`
+       console.error(message);
+       return message;
+     }
+   }
+   return null;
+ };
 app.delete('/recipes/:id', (req, res) => {
   Recipes.delete(req.params.id);
   console.log(`Deleted recipe \`${req.params.ID}\``);
